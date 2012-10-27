@@ -17,10 +17,8 @@
     (is (= (mock :error "abc") :return-value))
 
     ;; Can't use this yet, because I haven't 
-    ;;(expect-called (report) (mock :not-an-error "abc"))
-    (mock :not-an-error "abc")
-    (println "Test should have failed above.")
-
+    (expect-call (report) (mock :not-an-error "abc"))
+    
 
     (is (= (do-mock :error "abc") :logged) ":do mocks actually call the function")
     ))

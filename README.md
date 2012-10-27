@@ -62,17 +62,38 @@ We can also say that we don't care about how many more times a function is calle
 
 (This test will pass.)
 
+We can specify patterns and function bodies with :more:
+
+		(deftest check-test-error
+		  (expect-call (:more log [:error _])
+		    (check-error :error "abc")
+		    (check-error :error "xyz")))
+
+(This test will pass)
+
+Note that you can't specify a pattern or test behaviour with :never - if a :never function is called, the test fails.
+
 
 ### :do
 
-Sometimes, we might not want to stub out a function entirely - we just want to verify that it's happened. We specify this with (:do fn-name params & body). Once the body of our test function has been executed, the real function is called - and its return value is returned in the original call site.
+Sometimes, we might not want to stub out a function entirely - we want to verify that it's happened, but we want it to execute as well. We specify this with (:do fn-name params & body). Once the body of our test function has been executed, the real function is called - and its return value is returned in the original call site.
 
 For example:
 		(deftest check-test-error
 		  (expect-call (:do log [:error "abc"])
 		    (check-error :error "abc")))
-		    
+
 This test will pass, and it will also print 'ERROR: "abc"'.
+
+
+You can combine :do and :more. For example, this test swallows the log message that our test is looking for, but lets any other, unexpected messages through to the console:
+
+		(deftest check-test-error
+		  (expect-call [(log [:error "abc"]) (:do :more log)]
+		    (check-error :error "abc")
+		    (do something else...)))
+
+This test will pass. Note that omitting the pattern in the second (log) clause means "accept any arguments".
 
 
 ## License
