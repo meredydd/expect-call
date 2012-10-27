@@ -63,6 +63,9 @@
 
 (deftest readme-examples
 
+  ;; These are patterned after (although not quite identical to) the examples
+  ;; in the README.
+  
   (testing "Basic pass"
     (with-expect-call (log ["ERROR:" _])
       (check-error :error "abc")))
@@ -72,6 +75,10 @@
       (with-expect-call (log ["ERROR:" _])
         (check-error :success "abc"))))
 
+  (testing "Omitting parameters means we don't care what they are"
+    (with-expect-call (log)
+      (check-error :error "abc")))
+  
   (testing "Function body executes"
     (with-expect-call (log ["ERROR:" msg] (is (= msg "\"abc\"")))
       (check-error :error "abc")
