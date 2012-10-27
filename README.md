@@ -22,6 +22,14 @@ We can test it like so:
 		  (expect-call (log [:error _])
 		    (check-error :error "abc")))
 
+
+The following test will fail, because the log function is not called:
+
+		(deftest check-test-error
+		  (expect-call (log [:error _])
+		    (check-error :success "abc")))
+
+
 The "parameter list" for the function we're expecting to call is a clojure.core.match expression - so as well as specifying literal expected values, we can use wildcards like _ - and even binding forms to perform further tests or compose the function's return value. For example:
 
 		(deftest check-test-error
