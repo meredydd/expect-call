@@ -188,6 +188,55 @@ This test will pass, and also print `Unexpected log message` to the console.
 Note that omitting the pattern in the second (log) clause means "accept any arguments".
 
 
+## Larger example
+
+Here is a fanciful example of the sort of code I often find myself writing when working with hardware.
+
+```clojure
+(defn launch-rocket []
+
+  (when-let [key (launch-key-present?)]
+
+    (start-fuel-pump)
+
+    (while (< (get-fuel-pressure) 1000.0)
+      (Thread/yield))
+
+    (ignition/enable-with-key key)
+
+    (when (< (get-fuel-pressure) 900.0)
+      (abort!))
+
+    (send-email "mission-control@example.com"
+                (str "We have liftoff at " (java.util.Date.))))) 
+
+```
+
+It's a long sequence of imperative actions, and it's a pain to test. (And if it weren't a long sequence of imperative actions, it would be a pain to hack on.)
+
+Here's a sample test case, using `expect-call`:
+
+```clojure
+(deftest successful-launch
+  (with-expect-call [(launch-key-present? [] "secret key")
+                     (start-fuel-pump)
+                     ; Check it doesn't go anywhere until it has a good pressure reading
+                     (get-fuel-pressure [] 860.0)
+                     (get-fuel-pressure [] 1001.0)
+                     ; After this, we don't care how many more times it checks the pressure
+                     (:more get-fuel-pressure [] 950.0)
+                     ; ...but it definitely fails the test if it aborts on this input data.
+                     (:never abort!)
+                     ; Does it use the right key?
+                     (ignition/enable-with-key ["secret key"])
+                     ; Use a binding to capture the email body
+                     (send-email ["mission-control@example.com" body]
+                       (assert (re-matches #"We have liftoff at .* \d{2}:\d{2}:\d{2}.*\d{4}" body)))]
+    (launch-rocket))
+```
+Now, wasn't that so much nicer than dependency injection?
+
+
 ## Feedback
 
 Please send feedback and pull requests to `meredydd@senatehouse.org`, or `meredydd` on GitHub.
