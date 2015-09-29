@@ -85,6 +85,21 @@ The parameters we specify for our expected function calls is a `clojure.core.mat
 
 Of course, we could have expressed that expectation much more concisely using pattern-matching: `(expect-call (log [:error "abc"]))`.
 
+However you cannot do this:
+
+```clojure
+(defn ish [x] (println "x is" x) (str x "-ish"))
+(defn almost [x] (ish x))
+
+(deftest check-logging-3a
+  (let [x 5
+        x-ish "5-ish"]
+    (expect-call (ish [x] x-ish)
+      (almost x))))
+```
+
+The test would succeed, but it wouln't be correct. This is because the match expression (`[x]`) re-binds the var `x`. It would match anything, not just `5`. This can be fixed by using an assertion in mock's body like in `check-logging-3`. Note that `x-ish` is not part of the match expression so it's still `"5-ish"` inside the mock's body.
+
 
 ### Multiple Calls
 
