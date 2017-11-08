@@ -1,5 +1,5 @@
 (ns org.senatehouse.expect-call
-  (use org.senatehouse.expect-call.internal))
+  (:use org.senatehouse.expect-call.internal))
 
 (defmacro expect-call
   "expected-fns: (fn arg-match body...)
