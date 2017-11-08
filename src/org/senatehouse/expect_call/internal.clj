@@ -1,5 +1,5 @@
 (ns org.senatehouse.expect-call.internal
-  (use clojure.test [clojure.core.match :only (match)]))
+  (:use clojure.test [clojure.core.match :only (match)]))
 
 (def ^:dynamic *disable-interception* false)
 
