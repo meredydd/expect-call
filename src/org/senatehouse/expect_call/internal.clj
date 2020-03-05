@@ -48,7 +48,7 @@
   (let [args (or args '[& _])
         real-fn (gensym "real-fn")]
     `(let [~real-fn ~real-fn-name]
-       (fn ~(gensym (str real-fn-name "-mock")) [& ~'myargs]
+       (fn ~(gensym (str (name real-fn-name) "-mock")) [& ~'myargs]
          (match (apply vector ~'myargs)
                 ~args (do ~@body ~@(when (:do tags) `((apply ~real-fn ~'myargs))))
                 :else (my-report {:type :fail
