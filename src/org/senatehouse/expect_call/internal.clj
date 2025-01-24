@@ -7,13 +7,13 @@
   "Disable interception, to prevent looping if the test reporting code
    uses a function we're intercepting. Also put accurate file and line
    information into the message."
-  [msg depth]
+  [msg]
 
   (binding [*disable-interception* true]
     (report
      (merge
       (let [stack-trace (.getStackTrace (new Throwable))
-            ^StackTraceElement s (nth stack-trace (inc depth))]
+            ^StackTraceElement s (first (drop-while #(.startsWith (.getClassName ^StackTraceElement %) "org.senatehouse.expect_call.internal$") stack-trace))]
         {:file (.getFileName s) :line (.getLineNumber s)
          :stack-trace (seq stack-trace)})
       msg))))
@@ -42,7 +42,7 @@
                                  "Wrong function called"
                                  (str "Too many calls to " real-fn-name))
                       :expected (cons ex-real-fn-name ex-args)
-                      :actual (cons real-fn-name args)} 3))))))
+                      :actual (cons real-fn-name args)}))))))
 
 (defn make-mock [[tags real-fn-name & [args & body]]]
   (let [args (or args '[& _])
@@ -55,7 +55,7 @@
                                   :message "Unexpected arguments"
                                   :expected (quote ~(cons real-fn-name args))
                                   :actual (cons (quote ~real-fn-name)
-                                                ~'myargs)} 6))))))
+                                                ~'myargs)}))))))
 
 (defmacro -expect-call
   "expected-fns: (fn arg-match body...)
@@ -82,7 +82,7 @@
                                                :message ~(str real-fn " should not be called")
                                                :expected (quote (:never ~real-fn))
                                                :actual (cons (quote ~real-fn)
-                                                             args#)} 4))})))
+                                                             args#)}))})))
        
        
            ;; Format: ([function closure fn-name arg-form],
@@ -113,5 +113,5 @@
            (my-report {:type :fail
                        :message (str "Function " ex-fn-name# " was not called")
                        :expected (cons ex-fn-name# ex-args#)
-                       :actual nil} 0))
+                       :actual nil}))
          result#))))
