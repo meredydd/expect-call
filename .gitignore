@@ -11,3 +11,5 @@ pom.xml
 *~
 /README.html
 /pom.xml.asc
+*.iml
+/.idea
