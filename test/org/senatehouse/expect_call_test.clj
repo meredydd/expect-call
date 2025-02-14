@@ -1,7 +1,7 @@
 (ns org.senatehouse.expect-call-test
   (:require [clojure.test :refer :all]
-            [org.senatehouse.expect-call :refer :all]
-            [org.senatehouse.expect-call.internal :refer :all]))
+            [org.senatehouse.expect-call :as sut]
+            [org.senatehouse.expect-call.internal :as internal]))
 
 ;; These tests follow the examples in the README
 
@@ -45,7 +45,7 @@
      @reported?#))
 
 (deftest mocks
-  (let [make-mock make-mock
+  (let [make-mock internal/make-mock
         mock (eval (make-mock `(#{} log [:error ~'_] :return-value)))
         do-mock (eval (make-mock `(#{:do} log [:error ~'_])))]
 
@@ -64,34 +64,34 @@
   ;; in the README.
 
   (testing "Basic pass"
-    (with-expect-call (log ["ERROR:" _])
+    (sut/with-expect-call (log ["ERROR:" _])
       (check-error :error "abc")))
 
   (testing "Basic fail"
     (expecting-failure
-      (with-expect-call (log ["ERROR:" _])
-        (check-error :success "abc"))))
+     (sut/with-expect-call (log ["ERROR:" _])
+       (check-error :success "abc"))))
 
   (testing "Omitting parameters means we don't care what they are"
-    (with-expect-call (log)
+    (sut/with-expect-call (log)
       (check-error :error "abc")))
 
   (testing "Function body executes"
-    (with-expect-call (log ["ERROR:" msg] (is (= msg "\"abc\"")))
+    (sut/with-expect-call (log ["ERROR:" msg] (is (= msg "\"abc\"")))
       (check-error :error "abc")
       (check-error :success "xyz")))
 
   (testing "Enforce multiple calls"
     (expecting-failure
-     (with-expect-call [(log ["ERROR:" "\"abc\""])
-                        (log ["ERROR:" "\"xyz\""])]
+     (sut/with-expect-call [(log ["ERROR:" "\"abc\""])
+                            (log ["ERROR:" "\"xyz\""])]
        (check-error :error "abc")
        (check-error :error "xyz")
        (check-error :error "Surprise!"))))
 
   (testing "Multiple calls"
-    (with-expect-call [(log ["ERROR:" "\"abc\""])
-                       (log ["ERROR:" "\"xyz\""])]
+    (sut/with-expect-call [(log ["ERROR:" "\"abc\""])
+                           (log ["ERROR:" "\"xyz\""])]
       (check-error :error "abc")
       (check-error :error "xyz"))))
 
@@ -112,15 +112,14 @@
 
   (testing ":never"
     (check-line
-     (with-expect-call (:never log) (log :test))))
+     (sut/with-expect-call (:never log) (log :test))))
 
   (testing "Not called"
     (check-line
-     (with-expect-call (log))))
-  
-  (testing "Wrong function"
-    (check-line (with-expect-call [(log) (println)] (println "hi"))))
-  
-  (testing "Wrong args"
-    (check-line (with-expect-call (log [:x]) (log :y)))))
+     (sut/with-expect-call (log))))
 
+  (testing "Wrong function"
+    (check-line (sut/with-expect-call [(log) (println)] (println "hi"))))
+
+  (testing "Wrong args"
+    (check-line (sut/with-expect-call (log [:x]) (log :y)))))

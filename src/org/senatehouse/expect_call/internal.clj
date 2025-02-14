@@ -24,7 +24,7 @@
 
 (defn -expected-call
   "Used by (expect-call) macro. You don't call this."
-  [[more-fns calls :as state] real-fn real-fn-name args]
+  [[more-fns calls :as _state] real-fn real-fn-name args]
   (if *disable-interception*
     (apply real-fn args)
 
