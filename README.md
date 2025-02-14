@@ -17,7 +17,6 @@ If you're using `lein` (which you should be), add the following dependency to yo
 [org.senatehouse/expect-call "0.4.0"]
 ```
 
-
 ## Usage
 
 ### Basic Usage
@@ -236,7 +235,6 @@ Here's a sample test case, using `expect-call`:
 ```
 Now, wasn't that so much nicer than dependency injection?
 
-
 ## Feedback
 
 Please send feedback and pull requests to `meredydd@senatehouse.org`, or `meredydd` on GitHub.
@@ -247,4 +245,3 @@ Please send feedback and pull requests to `meredydd@senatehouse.org`, or `meredy
 Copyright © 2012 Meredydd Luff <meredydd@senatehouse.org>
 
 Distributed under the Eclipse Public License, the same as Clojure.
-

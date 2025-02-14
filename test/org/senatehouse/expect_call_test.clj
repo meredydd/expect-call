@@ -44,12 +44,11 @@
            :else :ok))))
      @reported?#))
 
-
 (deftest mocks
   (let [make-mock make-mock
         mock (eval (make-mock `(#{} log [:error ~'_] :return-value)))
         do-mock (eval (make-mock `(#{:do} log [:error ~'_])))]
-    
+
     (is (= (mock :error "abc") :return-value))
 
     (expecting-failure
@@ -59,13 +58,11 @@
 
     :ok))
 
-
-
 (deftest readme-examples
 
   ;; These are patterned after (although not quite identical to) the examples
   ;; in the README.
-  
+
   (testing "Basic pass"
     (with-expect-call (log ["ERROR:" _])
       (check-error :error "abc")))
@@ -78,7 +75,7 @@
   (testing "Omitting parameters means we don't care what they are"
     (with-expect-call (log)
       (check-error :error "abc")))
-  
+
   (testing "Function body executes"
     (with-expect-call (log ["ERROR:" msg] (is (= msg "\"abc\"")))
       (check-error :error "abc")
@@ -116,7 +113,7 @@
   (testing ":never"
     (check-line
      (with-expect-call (:never log) (log :test))))
-  
+
   (testing "Not called"
     (check-line
      (with-expect-call (log))))
