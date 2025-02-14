@@ -11,10 +11,30 @@ However much we would like to live in a purely functional world, we don't. Mocki
 
 ## Installation
 
+### Leiningen
+
 If you're using `lein` (which you should be), add the following dependency to your `project.clj` file:
 
 ```clojure
 [org.senatehouse/expect-call "0.4.0"]
+```
+
+### tools.deps
+
+In `deps.edn`:
+
+```clojure
+org.senatehouse/expect-call
+{:mvn/version "0.4.0"}
+```
+
+or:
+
+
+```clojure
+org.senatehouse/expect-call
+{:git/url "https://github.com/meredydd/expect-call"
+ :git/sha "<sha here>"}
 ```
 
 ## Usage
@@ -234,6 +254,16 @@ Here's a sample test case, using `expect-call`:
     (launch-rocket)))
 ```
 Now, wasn't that so much nicer than dependency injection?
+
+## Development
+
+### Testing
+
+Run tests with `lein test`.
+
+### Bumping dependencies
+
+Update both `deps.edn` and `project.clj`.
 
 ## Feedback
 
