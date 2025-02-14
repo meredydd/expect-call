@@ -1,5 +1,6 @@
 (ns org.senatehouse.expect-call.internal
-  (:use clojure.test [clojure.core.match :only (match)]))
+  (:require [clojure.test :refer :all]
+            [clojure.core.match :refer [match]]))
 
 (def ^:dynamic *disable-interception* false)
 
@@ -10,13 +11,16 @@
   [msg]
 
   (binding [*disable-interception* true]
-    (report
-     (merge
-      (let [stack-trace (.getStackTrace (new Throwable))
-            ^StackTraceElement s (first (drop-while #(.startsWith (.getClassName ^StackTraceElement %) "org.senatehouse.expect_call.internal$") stack-trace))]
-        {:file (.getFileName s) :line (.getLineNumber s)
-         :stack-trace (seq stack-trace)})
-      msg))))
+    (let [stack-trace (.getStackTrace (Throwable.))
+          ^StackTraceElement s (->> stack-trace
+                                    (drop-while #(.startsWith (.getClassName ^StackTraceElement %)
+                                                              "org.senatehouse.expect_call.internal$"))
+                                    (first))]
+      (report
+        (merge
+          {:file        (.getFileName s) :line (.getLineNumber s)
+           :stack-trace (seq stack-trace)}
+          msg)))))
 
 
 (defn -expected-call
