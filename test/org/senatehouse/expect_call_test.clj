@@ -1,7 +1,7 @@
 (ns org.senatehouse.expect-call-test
-  (use clojure.test
-       org.senatehouse.expect-call
-       org.senatehouse.expect-call.internal))
+  (:require [clojure.test :refer :all]
+            [org.senatehouse.expect-call :refer :all]
+            [org.senatehouse.expect-call.internal :refer :all]))
 
 ;; These tests follow the examples in the README
 
@@ -47,8 +47,8 @@
 
 (deftest mocks
   (let [make-mock make-mock
-        mock (eval (make-mock '(#{} log [:error _] :return-value)))
-        do-mock (eval (make-mock '(#{:do} log [:error _])))]
+        mock (eval (make-mock `(#{} log [:error ~'_] :return-value)))
+        do-mock (eval (make-mock `(#{:do} log [:error ~'_])))]
     
     (is (= (mock :error "abc") :return-value))
 
