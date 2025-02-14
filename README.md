@@ -265,6 +265,20 @@ Run tests with `lein test`.
 
 Update both `deps.edn` and `project.clj`.
 
+### Linting
+
+```shell
+#!/usr/bin/env fish
+
+clj-kondo --lint (clojure -Srepro -Spath) --dependencies --copy-configs
+
+clj-kondo --lint src:test:deps.edn:.clj-kondo/config.edn:resources
+```
+
+#### Working on the clj-kondo hook
+
+Use the `:hooks` alias in your editor/to start your repl. Optional: bump clj-kondo version there.
+
 ## Feedback
 
 Please send feedback and pull requests to `meredydd@senatehouse.org`, or `meredydd` on GitHub.
