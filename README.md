@@ -14,7 +14,7 @@ However much we would like to live in a purely functional world, we don't. Mocki
 If you're using `lein` (which you should be), add the following dependency to your `project.clj` file:
 
 ```clojure
-[org.senatehouse/expect-call "0.3.0"]
+[org.senatehouse/expect-call "0.4.0"]
 ```
 
 
