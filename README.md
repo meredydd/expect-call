@@ -231,7 +231,7 @@ Here's a sample test case, using `expect-call`:
                      ; Use a binding to capture the email body
                      (send-email ["mission-control@example.com" body]
                        (assert (re-matches #"We have liftoff at .* \d{2}:\d{2}:\d{2}.*\d{4}" body)))]
-    (launch-rocket))
+    (launch-rocket)))
 ```
 Now, wasn't that so much nicer than dependency injection?
 
