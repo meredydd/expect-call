@@ -236,6 +236,18 @@ Here's a sample test case, using `expect-call`:
 ```
 Now, wasn't that so much nicer than dependency injection?
 
+## Development
+
+Run tests with `lein test`.
+
+To check compatibility with different versions of Clojure, use the [Leiningen profiles](https://github.com/technomancy/leiningen/blob/master/doc/PROFILES.md#merging:~:text=Another%20use%20of%20profiles%20is%20to%20test%20against%20various%20sets%20of%20dependencies) defined:
+
+```shell
+lein with-profile 1.7 test
+lein with-profile 1.11 test
+
+etc.
+```
 
 ## Feedback
 
@@ -247,4 +259,3 @@ Please send feedback and pull requests to `meredydd@senatehouse.org`, or `meredy
 Copyright © 2012 Meredydd Luff <meredydd@senatehouse.org>
 
 Distributed under the Eclipse Public License, the same as Clojure.
-
