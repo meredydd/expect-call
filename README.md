@@ -11,12 +11,31 @@ However much we would like to live in a purely functional world, we don't. Mocki
 
 ## Installation
 
+### Leiningen
+
 If you're using `lein` (which you should be), add the following dependency to your `project.clj` file:
 
 ```clojure
 [org.senatehouse/expect-call "0.4.0"]
 ```
 
+### tools.deps
+
+In `deps.edn`:
+
+```clojure
+org.senatehouse/expect-call
+{:mvn/version "0.4.0"}
+```
+
+or:
+
+
+```clojure
+org.senatehouse/expect-call
+{:git/url "https://github.com/meredydd/expect-call"
+ :git/sha "<sha here>"}
+```
 
 ## Usage
 
@@ -232,11 +251,13 @@ Here's a sample test case, using `expect-call`:
                      ; Use a binding to capture the email body
                      (send-email ["mission-control@example.com" body]
                        (assert (re-matches #"We have liftoff at .* \d{2}:\d{2}:\d{2}.*\d{4}" body)))]
-    (launch-rocket))
+    (launch-rocket)))
 ```
 Now, wasn't that so much nicer than dependency injection?
 
 ## Development
+
+### Testing
 
 Run tests with `lein test`.
 
@@ -249,10 +270,27 @@ lein with-profile 1.11 test
 etc.
 ```
 
+### Bumping dependencies
+
+Update both `deps.edn` and `project.clj`.
+
+### Linting
+
+```shell
+#!/usr/bin/env fish
+
+clj-kondo --lint (clojure -Srepro -Spath) --dependencies --copy-configs
+
+clj-kondo --lint src:test:deps.edn:.clj-kondo/config.edn:resources
+```
+
+#### Working on the clj-kondo hook
+
+Use the `:hooks` alias in your editor/to start your repl. Optional: bump clj-kondo version there.
+
 ## Feedback
 
 Please send feedback and pull requests to `meredydd@senatehouse.org`, or `meredydd` on GitHub.
-
 
 ## License
 

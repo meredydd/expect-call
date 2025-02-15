@@ -8,8 +8,12 @@ pom.xml
 .lein-deps-sum
 .lein-failures
 .lein-plugins
+.lein-repl-history
 *~
 /README.html
 /pom.xml.asc
 *.iml
 /.idea
+.cpcache/
+.clj-kondo/*/
+.nrepl-port

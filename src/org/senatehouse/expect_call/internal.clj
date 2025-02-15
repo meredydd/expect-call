@@ -22,10 +22,9 @@
            :stack-trace (seq stack-trace)}
           msg)))))
 
-
 (defn -expected-call
   "Used by (expect-call) macro. You don't call this."
-  [[more-fns calls :as state] real-fn real-fn-name args]
+  [[more-fns calls :as _state] real-fn real-fn-name args]
   (if *disable-interception*
     (apply real-fn args)
 
@@ -34,12 +33,12 @@
         (do ; It matched the next explicit expectation. Run it.
           (swap! calls rest)
           (apply ex-fn args))
-        
+
         ;; It didn't match an explicit expectation - did it match
         ;; a :more or :never?
         (if-let [more-fn (more-fns real-fn)]
           (apply more-fn args)
-          
+
           ;; Nope - it's just wrong
           (my-report {:type :fail
                       :message (if ex-real-fn
@@ -66,7 +65,7 @@
                  or [(fn arg-match body...), (fn arg-match body...)...]
    Each fn may be preceded by keywords :more, :never or :do."
   [expected-fns & body]
-  
+
   (let [expected-fns (if (vector? expected-fns) expected-fns [expected-fns])
         expected-fns (for [fspec expected-fns]
                        (cons (apply hash-set (take-while keyword? fspec))
@@ -87,8 +86,7 @@
                                                :expected (quote (:never ~real-fn))
                                                :actual (cons (quote ~real-fn)
                                                              args#)}))})))
-       
-       
+
            ;; Format: ([function closure fn-name arg-form],
            ;;          [function closure arg-form], ...)
            calls# (atom
@@ -99,7 +97,7 @@
                          `(quote ~real-fn) `(quote ~args)])))
 
            ~state [more-fns# calls#]]
-       
+
        (let [result#
              (with-redefs
                ~(apply vector

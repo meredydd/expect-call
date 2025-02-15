@@ -1,0 +1,208 @@
+(ns hooks.org.senatehouse.expect-call
+  (:require [clj-kondo.hooks-api :as api]))
+
+;; region validation
+
+(def known-tags #{:do :more :never})
+
+(def findings
+  {:expect-call/expectations-missing
+   "Needs expected-fn(s): (fn arg-match body...) or [(fn arg-match body...)...], each fn may be preceded by keywords :do, :more, or :never."
+   :expect-call/empty-body "Empty expect-call body"
+   :expect-call/empty-expectations "No expected calls"
+   :expect-call/fspec "Must be (fn-name arg-match body...), fn-name may be preceded by keywords :do, :more, or :never."
+   :expect-call/duplicate-tag "Duplicate tag"
+   :expect-call/unknown-tag "Unknown tag"
+   :expect-call/never-with-other-tags "No tags should be used together with :never"
+   :expect-call/no-fn-name "Must be followed by a symbol representing a fn name"
+   :expect-call/fn-name "Must be a symbol representing a fn name"
+   :expect-call/never-with-args "No args or body should be used with :never"
+   :expect-call/args
+   "Must be an argument vector; can use literal value, map and sequence destructuring, and variable bindings"})
+
+(defn reg-finding!
+  "Registers a finding on node with finding-type. Returns nil"
+  [node finding-type]
+  (-> node
+      (meta)
+      (merge {:type finding-type :message (get findings finding-type)})
+      (api/reg-finding!))
+  nil)
+
+(defn validate-args-node! [args-node]
+  (or (nil? args-node)
+      (api/vector-node? args-node)
+      (reg-finding! args-node :expect-call/args)))
+
+(defn valid-tag!
+  "Returns unseen valid tag or nil. Regs findings on node."
+  [{:keys [k] :as node} seen-tags]
+  (cond
+    (contains? seen-tags k)
+    (reg-finding! node :expect-call/duplicate-tag)
+
+    (not (contains? known-tags k))
+    (reg-finding! node :expect-call/unknown-tag)
+
+    :else
+    (do (when (or (contains? seen-tags :never)
+                  (and (= :never k) (seq seen-tags)))
+          (reg-finding! node :expect-call/never-with-other-tags))
+        k)))
+
+(defn valid-tags+rest!
+  "Returns a vector containing the set of valid tags and the rest of the children.
+  Regs findings on tag nodes."
+  [expected-fn-children]
+  (into
+   [(transduce
+     (take-while api/keyword-node?)
+     (completing
+      (fn [seen-tags node]
+        (if-let [tag (valid-tag! node seen-tags)]
+          (conj seen-tags tag)
+          seen-tags)))
+     #{}
+     expected-fn-children)]
+   (drop-while api/keyword-node?)
+   expected-fn-children))
+
+(defn symbol-node? [node]
+  (and (api/token-node? node)
+       (symbol? (:value node))))
+
+(defn validate-expected-fn-children! [children]
+  (let [[tags fn-name args] (valid-tags+rest! children)]
+    (cond
+      (nil? fn-name)
+      (reg-finding! (last children) :expect-call/no-fn-name)
+
+      (not (symbol-node? fn-name))
+      (reg-finding! fn-name :expect-call/fn-name)
+
+      (and (:never tags) (some? args))
+      (reg-finding! args :expect-call/never-with-args)
+
+      :else
+      (validate-args-node! args))))
+
+(defn validate-expected-fn-node! [expected-fn-node]
+  (if (or (not (api/list-node? expected-fn-node))
+          (empty? (:children expected-fn-node)))
+    (reg-finding! expected-fn-node :expect-call/fspec)
+    (validate-expected-fn-children! (:children expected-fn-node))))
+
+(defn validate-expected-fns-node! [{:keys [children] :as expected-fns-node}]
+  (if (empty? children)
+    (reg-finding! expected-fns-node :expect-call/empty-expectations)
+    (not-any? nil? (mapv validate-expected-fn-node! children))))
+
+(defn validate-expectations-node! [expectation-node]
+  (if (api/vector-node? expectation-node)
+    (validate-expected-fns-node! expectation-node)
+    (validate-expected-fn-node! expectation-node)))
+
+(defn validate!
+  "Returns truthy if validation succeeded. Records findings if there are any."
+  [expect-call-node]
+  (let [[expectations-node & body] (rest (:children expect-call-node))]
+    (when (empty? body)
+      (reg-finding! expect-call-node :expect-call/empty-body))
+    (if (nil? expectations-node)
+      (reg-finding! expect-call-node :expect-call/expectations-missing)
+      (validate-expectations-node! expectations-node))))
+
+;; endregion validation
+
+;; region transformation
+
+(defn ->expected-fn-nodes [expected-fns-node]
+  (if (api/vector-node? expected-fns-node)
+    (:children expected-fns-node)
+    [expected-fns-node]))
+
+(defn with-ignore-unresolved  [node]
+  (vary-meta node assoc :clj-kondo/ignore [:unresolved-symbol :unresolved-var]))
+
+(letfn
+ [(analyze-rf
+    ([] {:args-node [] :symbol-nodes [] :value-nodes []})
+    ([acc] (update acc :args-node api/vector-node))
+    ([acc arg-node]
+     (cond
+       (symbol-node? arg-node)
+       (merge-with
+        conj acc
+        {:args-node arg-node
+         :symbol-nodes (-> arg-node with-ignore-unresolved)})
+
+       (api/vector-node? arg-node)
+       (merge-with
+        into acc
+        (update (analyze-argvec- arg-node) :args-node vector))
+
+       (or (api/string-node? arg-node)
+           (api/keyword-node? arg-node))
+       (update acc :args-node conj (api/token-node (gensym "_arg")))
+
+       :else
+       (merge-with
+        conj acc
+        {:args-node (api/token-node (gensym "_arg"))
+         :value-nodes arg-node}))))
+  (analyze-argvec- [args-node]
+    (cond
+      (nil? args-node)
+      {:args-node
+       (api/vector-node [(api/token-node '&) (api/token-node (gensym "_more"))])}
+
+      (empty? (:children args-node))
+      {:args-node args-node}
+
+      :else
+      (analyze-rf (reduce analyze-rf (analyze-rf) (:children args-node)))))]
+  (defn analyze-argvec
+    "Returns an argvec that is safe to use as a binding vector,
+    symbols found during analysis, and literal values found during analysis"
+    [args-node]
+    (analyze-argvec- args-node)))
+
+(defn redefed-fn
+  "Transforms expected fn spec into a pair usable with with-redefs.
+  As it might replace nodes in the argvec, it tries to add statements (prn)
+  that result in registering usage and further analysis for the replaced nodes"
+  [{:keys [children]}]
+  (let [[fn-name-node args-node & body] (into [] (drop-while api/keyword-node?) children)
+        {:keys [args-node #_symbol-nodes value-nodes]} (analyze-argvec args-node)]
+    [fn-name-node
+     (api/list-node
+      (->
+       [(api/token-node 'do)]
+       (cond->
+        ;; register usage of symbols that are both in the argvec and are valid just outside
+        ;; check after https://github.com/clj-kondo/clj-kondo/issues/2472
+        #_#_(seq symbol-nodes)
+        (conj (-> (api/list-node (list* (api/token-node `prn) symbol-nodes)) with-ignore-unresolved))
+
+        ;; register use of replaced value nodes so they can be linted too
+        (seq value-nodes)
+        (conj (api/list-node (list* (api/token-node `prn) value-nodes))))
+
+       ;; actual fn definition to have body linted
+       (conj (api/list-node (list* (api/token-node 'fn) args-node body)))))]))
+
+(defn ->with-redefs [expect-call-node]
+  (let [[expectations-node & body] (rest (:children expect-call-node))]
+    (-> expectations-node
+        (->expected-fn-nodes)
+        (->> (into [] (mapcat redefed-fn)))
+        (api/vector-node)
+        (as-> $ (list* (api/token-node 'with-redefs) $ body))
+        (api/list-node)
+        #_(doto (-> api/sexpr prn)))))
+
+;; endregion transformation
+
+(defn expect-call [{:keys [node]}]
+  (when (validate! node)
+    {:node (->with-redefs node)}))

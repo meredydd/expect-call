@@ -1,0 +1,16 @@
+{:hooks
+ {:analyze-call
+  {org.senatehouse.expect-call/with-expect-call hooks.org.senatehouse.expect-call/expect-call
+   org.senatehouse.expect-call/expect-call hooks.org.senatehouse.expect-call/expect-call}}
+ :linters
+ {:expect-call/expectations-missing {:level :error}
+  :expect-call/empty-body {:level :warning}
+  :expect-call/empty-expectations {:level :warning}
+  :expect-call/fspec {:level :error}
+  :expect-call/duplicate-tag {:level :warning}
+  :expect-call/unknown-tag {:level :warning}
+  :expect-call/never-with-other-tags {:level :error}
+  :expect-call/no-fn-name {:level :error}
+  :expect-call/fn-name {:level :error}
+  :expect-call/never-with-args {:level :error}
+  :expect-call/args {:level :error}}}
